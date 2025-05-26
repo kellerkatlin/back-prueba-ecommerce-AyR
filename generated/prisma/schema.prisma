@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Empresa {
+  id          Int    @id @default(autoincrement())
+  ruc         String
+  razonSocial String
+  direccion   String
+  codUbigeo   String
+  estado      String
+}
+
+model Cliente {
+  id         Int         @id @default(autoincrement())
+  nombres    String
+  apePaterno String
+  apeMaterno String
+  celular    String
+  email      String
+  direccion  String
+  codPostal  String
+  estado     String
+  pedidos    PedidoCab[]
+}
+
+model Categoria {
+  id               Int         @id @default(autoincrement())
+  codigo           String
+  tipo             String
+  descripcion      String
+  imagenUrl        String?
+  estado           String
+  categoriaPadreId Int?
+  categoriaPadre   Categoria?  @relation("Subcategorias", fields: [categoriaPadreId], references: [id])
+  subcategorias    Categoria[] @relation("Subcategorias")
+  productos        Producto[]
+}
+
+model Producto {
+  id              Int                    @id @default(autoincrement())
+  codigo          String
+  descripcion     String
+  unidadVenta     String
+  categoriaId     Int
+  categoria       Categoria              @relation(fields: [categoriaId], references: [id])
+  contenidoUnidad String
+  infoAdicional   String?
+  fotoUrl         String?
+  moneda          String
+  tasaImpuesto    Float
+  precioVenta     Float
+  estado          String
+  stocks          Stock[]
+  movimientos     MovimientoInventario[]
+  pedidosDetalle  PedidoDet[]
+}
+
+model Stock {
+  id                Int      @id @default(autoincrement())
+  productoId        Int
+  producto          Producto @relation(fields: [productoId], references: [id])
+  stockFisico       Int
+  stockComprometido Int
+}
+
+model MovimientoInventario {
+  id          Int      @id @default(autoincrement())
+  tipo        String
+  numero      String
+  fecha       DateTime
+  signo       String
+  productoId  Int
+  producto    Producto @relation(fields: [productoId], references: [id])
+  unidadVenta String
+  cantidad    Int
+  estado      String
+}
+
+model PedidoCab {
+  id               Int         @id @default(autoincrement())
+  tipo             String
+  numero           String
+  clienteId        Int
+  cliente          Cliente     @relation(fields: [clienteId], references: [id])
+  fecha            DateTime
+  direccionEntrega String
+  detalles         PedidoDet[]
+}
+
+model PedidoDet {
+  id             Int       @id @default(autoincrement())
+  pedidoId       Int
+  pedido         PedidoCab @relation(fields: [pedidoId], references: [id])
+  productoId     Int
+  producto       Producto  @relation(fields: [productoId], references: [id])
+  cantidad       Int
+  valorUnitario  Float
+  tasaImpuesto   Float
+  precioUnitario Float
+  precioTotal    Float
+}
